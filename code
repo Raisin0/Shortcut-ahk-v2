@@ -1,1 +1,127 @@
-test
+
+#Requires AutoHotkey v2.0
+
+;----------------------------------------------------------
+; === Smart Create New Folder ===
+; Ctrl + Alt + D
+
+^!d:: {
+
+    ; Ask folder name
+    box := InputBox("Enter folder name:", "Create New Folder")
+
+    if (box.Result != "OK")
+        return
+
+    folderName := box.Value
+
+    ; Get active explorer path
+    path := ""
+
+    for window in ComObject("Shell.Application").Windows {
+        try {
+            if (window.HWND = WinActive("A")) {
+                path := window.Document.Folder.Self.Path
+                break
+            }
+        }
+    }
+
+    ; If no explorer path found, check clipboard
+    if (path = "") {
+        clip := A_Clipboard
+        if DirExist(clip)
+            path := clip
+    }
+
+    ; If still empty, use Desktop
+    if (path = "")
+        path := A_Desktop
+
+    ; Prevent duplicate names
+    newPath := path "\" folderName
+    counter := 1
+
+    while DirExist(newPath) {
+        newPath := path "\" folderName " (" counter ")"
+        counter++
+    }
+
+    DirCreate(newPath)
+}
+
+;----------------------------------------------------------
+; === Launch Firefox ===
+; Ctrl + Alt + F
+
+^!f:: {
+    Run("firefox")
+}
+
+;----------------------------------------------------------
+; === Toggle Maximize / Restore ===
+; Ctrl + Alt + A
+
+^!a:: {
+    state := WinGetMinMax("A")
+
+    if (state = 1)
+        WinRestore("A")
+    else
+        WinMaximize("A")
+}
+
+;----------------------------------------------------------
+; === Minimize Window ===
+; Ctrl + Alt + Q
+
+^!q:: {
+    WinMinimize("A")
+}
+
+;----------------------------------------------------------
+; === Close Window ===
+; Ctrl + Alt + W
+
+^!w:: {
+    WinClose("A")
+}
+
+;----------------------------------------------------------
+; === Exit Fullscreen & Center Resize ===
+; Ctrl + Alt + C
+
+^!c:: {
+
+    hwnd := WinExist("A")
+
+    if !hwnd
+        return
+
+    ; Try to exit fullscreen (common for games)
+    Send("!{Enter}")
+    Sleep(200)
+
+    ; Restore window
+    WinRestore(hwnd)
+    Sleep(100)
+
+    ; Target window size
+    newW := 500
+    newH := 600
+
+    ; Get screen dimensions
+    screenW := A_ScreenWidth
+    screenH := A_ScreenHeight
+
+    ; Calculate center position
+    newX := (screenW - newW) // 2
+    newY := (screenH - newH) // 2
+
+    ; Resize and center
+    WinMove(newX, newY, newW, newH, hwnd)
+}
+
+;----------------------------------------------------------
+; === End of Script ===
+
